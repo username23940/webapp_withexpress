@@ -1,3 +1,19 @@
+const express = require("express") // express 에는 다른 것이 들어올 일이 없으니까, 저 이름의 값이 바뀌지 않도록 고정(const로)
+const app = express() // express를 호출. app 객체를 담음. 
+
+app.get("/", (req,res) => res.send("Hello World")) // app 객체에서 get 메서드 사용.
+// app.get("/", function(req,res) { return res.send("Hello World");} 이거랑 같아
+// get 메서드 : 라우트, 라우팅. 사용자들이 여러가지 path로 들어올 때, path마다 적당한 응답을 해줌
+// 첫번째 인자는 경로, 두번쨰 인자는 그 경로로 접속했을 때 실행할 함수 = 라우팅
+// 기존 코드에서는 if 문을 통해 구현
+
+app.listen(3000, () => console.log("Example App listening on port 3000!"))
+// 웹서버가 실행되면서 3000번 포트 리스닝, 성공시 console 출력
+
+
+
+
+/*
 var http = require('http');
 var fs = require('fs');
 var url = require('url');
@@ -141,3 +157,4 @@ var app = http.createServer(function(request,response){
     }
 });
 app.listen(3000);
+*/
