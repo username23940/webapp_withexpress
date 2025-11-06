@@ -5,7 +5,10 @@ var template = require('./lib/template.js');
 var path = require('path');
 var sanitizeHtml = require('sanitize-html');
 var qs = require('querystring');
+var bodyParser = require("body-parser");
 // modules
+
+app.use(bodyParser.urlencoded({extended: False}));
 
 app.get("/", (request, response) => 
      fs.readdir('./data', function(error, filelist){
@@ -64,21 +67,13 @@ app.get("/create", (request, response) =>
 );
 
 app.post("/create_process", (request, response) =>  // form 에서 post 방식으로 전송했기 때문 
-      var body = '';
-      request.on('data', function(data){
-          body = body + data;
-      });
-      request.on('end', function(){
-          var post = qs.parse(body);
-          var title = post.title;
-          var description = post.description;
-          fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-            response.writeHead(302, {Location: `/?id=${title}`});
-            response.end();
-            response.redirect(`/page/${title}`);
-
-          })
-      });    
+     var post = request.body;
+     var title = post.title;
+     var description = post.description;
+     fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+       response.writeHead(302, {Location: `/?id=${title}`});
+       response.end();
+       response.redirect(`/page/${title}`);
 );
 
 app.get("/update/:pageId", (request, response) =>
@@ -108,64 +103,25 @@ app.get("/update/:pageId", (request, response) =>
 );
 
 app.post("/update_process", (request, response) =>  
-      var body = '';
-      request.on('data', function(data){
-          body = body + data;
-      });
-      request.on('end', function(){
-          var post = qs.parse(body);
-          var id = post.id;
-          var title = post.title;
-          var description = post.description;
-          fs.rename(`data/${id}`, `data/${title}`, function(error){
-            fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-              response.redirect(`/page/${title}`);
-            })
-          });
-      });  
+     var request.body;
+     var id = post.id;
+     var title = post.title;
+     var description = post.description;
+     fs.rename(`data/${id}`, `data/${title}`, function(error){
+       fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+         response.redirect(`/page/${title}`);
+       });
+     });
 );
 
 app.post("/delete_process", (request, response) =>
-      var body = '';
-      request.on('data', function(data){
-          body = body + data;
-      });
-      request.on('end', function(){
-          var post = qs.parse(body);
-          var id = post.id;
-          var filteredId = path.parse(id).base;
-          fs.unlink(`data/${filteredId}`, function(error){
-            response.redirect('/');
-          });
-      });
+     var post = request.body;
+     var id = post.id;
+     var filteredId = path.parse(id).base;
+     fs.unlink(`data/${filteredId}`, function(error){
+       response.redirect('/');
+     });
 );
 
 app.listen(3000, () => console.log("Example App listening on port 3000!"))
 // 웹서버가 실행되면서 3000번 포트 리스닝, 성공시 console 출력
-
-
-/*
-app.get("/", (req,res) => res.send("Hello World"))
-app 객체에서 get 메서드 사용.
-app.get("/", function(req,res) { return res.send("Hello World");} 이거랑 같아
-get 메서드 : 라우트, 라우팅. 사용자들이 여러가지 path로 들어올 때, path마다 적당한 응답을 해줌
-첫번째 인자는 경로, 두번쨰 인자는 그 경로로 접속했을 때 실행할 함수 = 라우팅
-기존 코드에서는 if 문을 통해 구현
-
-app.get("/page/:pageId", (request, response) => // /page 뒤에 들어올 어떤 값에 :pageId라는 이름을 붙였고, params 객체 안에 존재
-       return response.send(request.params); 
-);
-
-*/
-
-/*
-var app = http.createServer(function(request,response){
-    
-
-    } else {
-      response.writeHead(404);
-      response.end('Not found');
-    }
-});
-app.listen(3000);
-*/
