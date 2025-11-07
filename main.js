@@ -36,8 +36,8 @@ app.get("/page/:pageId", (request, response) =>
             var html = template.HTML(sanitizedTitle, list,
               `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
               ` <a href="/create">create</a>
-                <a href="/update/${sanitizedTitle}">update</a> // ?id=${}에서 routing params 이용하므로 제거
-                <form action="/delete_process" method="post"> // /delete.. 라고 안적으면 눌렀을 때, /page의 하위에서 delete로 이동!
+                <a href="/update/${sanitizedTitle}">update</a> // routing params 이용하므로 ?id=${} 제거
+                <form action="/delete_process" method="post"> // /delete... 라고 안적으면 눌렀을 때, /page의 하위에서 delete로 이동!
                   <input type="hidden" name="id" value="${sanitizedTitle}">
                   <input type="submit" value="delete">
                 </form>`
