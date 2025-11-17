@@ -9,6 +9,7 @@ var qs = require('querystring');
 var bodyParser = require("body-parser");
 // modules
 
+app.use(express.static('public')) // public 폴더 안의 정적 파일, 폴더들을 찾아 url로 접근할 수 있게 함
 app.use(bodyParser.urlencoded({extended: False})); // app.use()는 “이 미들웨어를 전체 요청 흐름의 일부로 포함시켜라”는 뜻이에요
 app.use(compression()); // 함수 호출 -> 미들웨어를 리턴하도록 약속됨. 그것이 app.use를 통해 장착
 app.get('*', function(request, response, next{ // get 방식으로 들어오는 모든 요청에 대해서만 작동
@@ -23,32 +24,37 @@ app.get("/", (request, response) =>
         var description = 'Hello, Node.js';
         var list = template.list(request.list);
         var html = template.HTML(title, list,
-        `<h2>${title}</h2>${description}`,
+        `
+        <h2>${title}</h2>${description}
+        <img src='/images/hello.jpg' style='width : 300px; display : block'; margin-top:10px;'>
+        `,
         `<a href="/create">create</a>`
         );
         response.send(html);
 ); 
 
-app.get("/page/:pageId", (request, response) =>
-          var filteredId = path.parse(request.params.pageId).base;
-          fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
+app.get("/page/:pageId", (request, response, next) =>
+     var filteredId = path.parse(request.params.pageId).base;
+     fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
+       if(err) {
+            next(err); // 아무것도 없거나 'route'가 아닌 경우는 에러를 던지는 것으로 내부적으로 약속
+       } else {
             var title = request.params.pageId;
             var sanitizedTitle = sanitizeHtml(title);
-            var sanitizedDescription = sanitizeHtml(description, {
-              allowedTags:['h1']
-            });
+            var sanitizedDescription = sanitizeHtml(description, {allowedTags:['h1']});
             var list = template.list(request.list);
             var html = template.HTML(sanitizedTitle, list,
               `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-              ` <a href="/create">create</a>
-                <a href="/update/${sanitizedTitle}">update</a> // routing params 이용하므로 ?id=${} 제거
-                <form action="/delete_process" method="post"> // /delete... 라고 안적으면 눌렀을 때, /page의 하위에서 delete로 이동!
-                  <input type="hidden" name="id" value="${sanitizedTitle}">
-                  <input type="submit" value="delete">
-                </form>`
-            );
-            response.send(html);
-          });
+              `<a href="/create">create</a>
+               <a href="/update/${sanitizedTitle}">update</a> // routing params 이용하므로 ?id=${} 제거
+               <form action="/delete_process" method="post"> // /delete... 라고 안적으면 눌렀을 때, /page의 하위에서 delete로 이동!
+               <input type="hidden" name="id" value="${sanitizedTitle}">
+               <input type="submit" value="delete">
+           </form>`
+       );
+       response.send(html);
+     }
+  });
 );
 
 app.get("/create", (request, response) => 
@@ -123,5 +129,15 @@ app.post("/delete_process", (request, response) =>
      });
 );
 
-app.listen(3000, () => console.log("Example App listening on port 3000!"))
+app.use((req, res, next) => {
+  res.status(404).send("Sorry can't find that!")
+})
+
+app.use((err, req, res, next) => { // 첫번째 매개변수 : next를 통해 전달 받을 에러 데이터
+  console.error(err.stack)
+  res.status(500).send('Something broke!')
+}) // express에서 매개변수가 4개인 콜백함수는 에러 핸들러를 위한 미들웨어로 약속. 
+// 그래서 페이지가 찾을 수 없는 경우 next(err)가 호출되면 그 다음에 어떤 미들웨어가 오든 전부 무시후 4개 매개변수인 미들웨어 호출.
+
+ app.listen(3000, () => console.log("Example App listening on port 3000!"))
 // 웹서버가 실행되면서 3000번 포트 리스닝, 성공시 console 출력
