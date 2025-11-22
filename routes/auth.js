@@ -36,6 +36,7 @@ router.post("/login_process", (request, response) =>  // form 에서 post 방식
    if(email === authData.email && pwd === authData.password) {
      request.session.is_logined = true;
      request.session.nickname = authData.nickname;
+     response.redirect('/');
    } else {
      response.send('Who?')
    }
