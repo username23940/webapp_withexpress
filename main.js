@@ -7,127 +7,23 @@ var path = require('path');
 var sanitizeHtml = require('sanitize-html');
 var qs = require('querystring');
 var bodyParser = require("body-parser");
+
+var indexRouter = require('./routes/index');
+var topicRouter = require('./routes/topic');
 // modules
 
 app.use(express.static('public')) // public 폴더 안의 정적 파일, 폴더들을 찾아 url로 접근할 수 있게 함
 app.use(bodyParser.urlencoded({extended: False})); // app.use()는 “이 미들웨어를 전체 요청 흐름의 일부로 포함시켜라”는 뜻이에요
 app.use(compression()); // 함수 호출 -> 미들웨어를 리턴하도록 약속됨. 그것이 app.use를 통해 장착
+
 app.get('*', function(request, response, next{ // get 방식으로 들어오는 모든 요청에 대해서만 작동
      fs.readdir('./data', function(error, filelist){
           request.list=filelist; // request 객체의 list 변수를 filelist의 값으로 줌
           next(); // 3번째 인자를 실행. next에는 그다음에 호출되어야 할 미들웨어가 담겨져 있음(지금은 없음)
      });
 });
-
-app.get("/", (request, response) => 
-        var title = 'Welcome';
-        var description = 'Hello, Node.js';
-        var list = template.list(request.list);
-        var html = template.HTML(title, list,
-        `
-        <h2>${title}</h2>${description}
-        <img src='/images/hello.jpg' style='width : 300px; display : block'; margin-top:10px;'>
-        `,
-        `<a href="/create">create</a>`
-        );
-        response.send(html);
-); 
-
-app.get("/page/:pageId", (request, response, next) =>
-     var filteredId = path.parse(request.params.pageId).base;
-     fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
-       if(err) {
-            next(err); // 아무것도 없거나 'route'가 아닌 경우는 에러를 던지는 것으로 내부적으로 약속
-       } else {
-            var title = request.params.pageId;
-            var sanitizedTitle = sanitizeHtml(title);
-            var sanitizedDescription = sanitizeHtml(description, {allowedTags:['h1']});
-            var list = template.list(request.list);
-            var html = template.HTML(sanitizedTitle, list,
-              `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-              `<a href="/create">create</a>
-               <a href="/update/${sanitizedTitle}">update</a> // routing params 이용하므로 ?id=${} 제거
-               <form action="/delete_process" method="post"> // /delete... 라고 안적으면 눌렀을 때, /page의 하위에서 delete로 이동!
-               <input type="hidden" name="id" value="${sanitizedTitle}">
-               <input type="submit" value="delete">
-           </form>`
-       );
-       response.send(html);
-     }
-  });
-);
-
-app.get("/create", (request, response) => 
-        var title = 'WEB - create';
-        var list = template.list(request.list);
-        var html = template.HTML(title, list, `
-          <form action="/create_process" method="post">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p>
-              <textarea name="description" placeholder="description"></textarea>
-            </p>
-            <p>
-              <input type="submit">
-            </p>
-          </form>
-        `, '');
-        response.send(html);
-);
-
-app.post("/create_process", (request, response) =>  // form 에서 post 방식으로 전송했기 때문 
-     var post = request.body;
-     var title = post.title;
-     var description = post.description;
-     fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-       response.writeHead(302, {Location: `/?id=${title}`});
-       response.end();
-       response.redirect(`/page/${title}`);
-);
-
-app.get("/update/:pageId", (request, response) =>
-        var filteredId = path.parse(request.params.pageId).base;
-        fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
-            var title = request.params.pageId;
-            var list = template.list(request.list);
-            var html = template.HTML(title, list,
-            `
-            <form action="/update_process" method="post">
-              <input type="hidden" name="id" value="${title}">
-              <p><input type="text" name="title" placeholder="title" value="${title}"></p>
-              <p>
-                <textarea name="description" placeholder="description">${description}</textarea>
-              </p>
-              <p>
-                <input type="submit">
-              </p>
-            </form>
-            `,
-            `<a href="/create">create</a> <a href="/update/${title}">update</a>`
-            );
-            response.send(html);
-        });
-);
-
-app.post("/update_process", (request, response) =>  
-     var request.body;
-     var id = post.id;
-     var title = post.title;
-     var description = post.description;
-     fs.rename(`data/${id}`, `data/${title}`, function(error){
-       fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-         response.redirect(`/page/${title}`);
-       });
-     });
-);
-
-app.post("/delete_process", (request, response) =>
-     var post = request.body;
-     var id = post.id;
-     var filteredId = path.parse(id).base;
-     fs.unlink(`data/${filteredId}`, function(error){
-       response.redirect('/');
-     });
-);
+app.use('/', indexRouter);
+app.use('/topic', topicRouter);
 
 app.use((req, res, next) => {
   res.status(404).send("Sorry can't find that!")
