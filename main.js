@@ -10,11 +10,18 @@ var bodyParser = require("body-parser");
 
 var indexRouter = require('./routes/index');
 var topicRouter = require('./routes/topic');
+var authRouter = require('./routes/auth');
 // modules
 
-app.use(express.static('public')) // public 폴더 안의 정적 파일, 폴더들을 찾아 url로 접근할 수 있게 함
-app.use(bodyParser.urlencoded({extended: False})); // app.use()는 “이 미들웨어를 전체 요청 흐름의 일부로 포함시켜라”는 뜻이에요
-app.use(compression()); // 함수 호출 -> 미들웨어를 리턴하도록 약속됨. 그것이 app.use를 통해 장착
+app.use(express.static('public'))
+app.use(bodyParser.urlencoded({extended: False}));
+app.use(compression()); 
+app.use(session({ 
+  secret: 'keyboard cat', 
+  resave: false, 
+  saveUninitialized: true ,
+  store : New FileStore() 
+}))
 
 app.get('*', function(request, response, next{ // get 방식으로 들어오는 모든 요청에 대해서만 작동
      fs.readdir('./data', function(error, filelist){
@@ -22,13 +29,14 @@ app.get('*', function(request, response, next{ // get 방식으로 들어오는 
           next(); // 3번째 인자를 실행. next에는 그다음에 호출되어야 할 미들웨어가 담겨져 있음(지금은 없음)
      });
 });
+
 app.use('/', indexRouter);
 app.use('/topic', topicRouter);
+app.use('/auth', authRouter);
 
 app.use((req, res, next) => {
   res.status(404).send("Sorry can't find that!")
 })
-
 app.use((err, req, res, next) => { // 첫번째 매개변수 : next를 통해 전달 받을 에러 데이터
   console.error(err.stack)
   res.status(500).send('Something broke!')
