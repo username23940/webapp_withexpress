@@ -1,0 +1,44 @@
+var express = require('express');
+var router = express.Router();
+var fs = require('fs');
+var template = require('./lib/template.js');
+var path = require('path');
+var sanitizeHtml = require('sanitize-html');
+var qs = require('querystring');
+var helmet = require('helmet');
+app.use(helmet());
+var session = require('express-session');
+var FileStore = require('session-file-store')(session)
+
+var authData = {
+  email : 'hi@gmail.com', 
+  password : '1111',
+  nickname : 'hi'
+}
+
+router.get("/login", (request, response) => 
+        var title = 'WEB - create';
+        var list = template.list(request.list);
+        var html = template.HTML(title, list, `
+          <form action="/auth/1login_process" method="post">
+            <p><input type="text" name="email" placeholder="email"></p>
+            <p><input type="password" name="pwd" placeholder="password"></p>
+            <p><input type="submit" value = 'login'></p>
+          </form>
+        `, '');
+        response.send(html);
+);
+
+router.post("/login_process", (request, response) =>  // form 에서 post 방식으로 전송했기 때문 
+   var post = request.body;
+   var email = post.email;
+   var passowrd = post.pwd;
+   if(email === authData.email && pwd === authData.password) {
+     request.session.is_logined = true;
+     request.session.nickname = authData.nickname;
+   } else {
+     response.send('Who?')
+   }
+);
+
+module.exports = router;
