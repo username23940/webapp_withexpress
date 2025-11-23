@@ -9,20 +9,24 @@ var auth = require('../lib/auth.js');
 
 
 router.get("/create", (request, response) => 
-        var title = 'WEB - create';
-        var list = template.list(request.list);
-        var html = template.HTML(title, list, `
-          <form action="/create_process" method="post">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p>
-              <textarea name="description" placeholder="description"></textarea>
-            </p>
-            <p>
-              <input type="submit">
-            </p>
-          </form>
-        `, '', auth.statusUI(request, response));
-        response.send(html);
+    if(!auth.isOwner)(request, response) {
+        response.redirect('/');
+        return false; // 나머지 뒤의 코드를 실행되지 않게 함
+    }
+    var title = 'WEB - create';
+    var list = template.list(request.list);
+    var html = template.HTML(title, list, `
+      <form action="/create_process" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p>
+          <textarea name="description" placeholder="description"></textarea>
+        </p>
+        <p>
+          <input type="submit">
+        </p>
+      </form>
+    `, '', auth.statusUI(request, response));
+    response.send(html);
 );
 
 router.post("/create_process", (request, response) =>  // form 에서 post 방식으로 전송했기 때문 
@@ -36,27 +40,31 @@ router.post("/create_process", (request, response) =>  // form 에서 post 방�
 );
 
 router.get("/update/:pageId", (request, response) =>
-        var filteredId = path.parse(request.params.pageId).base;
-        fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
-            var title = request.params.pageId;
-            var list = template.list(request.list);
-            var html = template.HTML(title, list,
-            `
-            <form action="/update_process" method="post">
-              <input type="hidden" name="id" value="${title}">
-              <p><input type="text" name="title" placeholder="title" value="${title}"></p>
-              <p>
-                <textarea name="description" placeholder="description">${description}</textarea>
-              </p>
-              <p>
-                <input type="submit">
-              </p>
-            </form>
-            `,
-            `<a href="/create">create</a> <a href="/update/${title}">update</a>`, auth.statusUI(request, response)
-            );
-            response.send(html);
-        });
+    if(!auth.isOwner)(request, response) {
+        response.redirect('/');
+        return false; // 나머지 뒤의 코드를 실행되지 않게 함
+    }
+    var filteredId = path.parse(request.params.pageId).base;
+    fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
+        var title = request.params.pageId;
+        var list = template.list(request.list);
+        var html = template.HTML(title, list,
+        `
+        <form action="/update_process" method="post">
+          <input type="hidden" name="id" value="${title}">
+          <p><input type="text" name="title" placeholder="title" value="${title}"></p>
+          <p>
+            <textarea name="description" placeholder="description">${description}</textarea>
+          </p>
+          <p>
+            <input type="submit">
+          </p>
+        </form>
+        `,
+        `<a href="/create">create</a> <a href="/update/${title}">update</a>`, auth.statusUI(request, response)
+        );
+        response.send(html);
+    });
 );
 
 router.post("/update_process", (request, response) =>  
@@ -72,12 +80,16 @@ router.post("/update_process", (request, response) =>
 );
 
 router.post("/delete_process", (request, response) =>
-     var post = request.body;
-     var id = post.id;
-     var filteredId = path.parse(id).base;
-     fs.unlink(`data/${filteredId}`, function(error){
-       response.redirect('/');
-     });
+    if(!auth.isOwner)(request, response) {
+        response.redirect('/');
+        return false; // 나머지 뒤의 코드를 실행되지 않게 함
+    }
+    var post = request.body;
+    var id = post.id;
+    var filteredId = path.parse(id).base;
+    fs.unlink(`data/${filteredId}`, function(error){
+        response.redirect('/');
+    });
 
 router.get("/page/:pageId", (request, response, next) => // 미들웨어 순서에 의해 cru가 먼저 라우트 되어야함
      var filteredId = path.parse(request.params.pageId).base;
