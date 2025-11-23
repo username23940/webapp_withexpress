@@ -42,4 +42,10 @@ router.post("/login_process", (request, response) =>  // form 에서 post 방식
    }
 );
 
+router.get("/logout", (request, response) => 
+  request.session.destroy(function(err){ // 이 콜백은 세션의 호출이 끝난 다음에 실행되도록 약속
+    response.redirect('/');
+  });
+);
+
 module.exports = router;
