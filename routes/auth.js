@@ -36,7 +36,9 @@ router.post("/login_process", (request, response) =>  // form 에서 post 방식
    if(email === authData.email && pwd === authData.password) {
      request.session.is_logined = true;
      request.session.nickname = authData.nickname;
-     response.redirect('/');
+     request.session.save(function(err) { // session 객체의 정보를 저장소에 바로 저장 후 , 콜백으로 리디렉션
+       response.redirect('/');
+     })
    } else {
      response.send('Who?')
    }
